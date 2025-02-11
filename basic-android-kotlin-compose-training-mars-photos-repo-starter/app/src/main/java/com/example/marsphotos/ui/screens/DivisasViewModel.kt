@@ -51,20 +51,21 @@ class DivisasViewModel @Inject constructor(
      * Call getMarsPhotos() on init so we can display status immediately.
      */
     init {
-        getMarsPhotos()
+        getDivisas()
     }
 
     /**
      * Gets Mars photos information from the Mars API Retrofit service and updates the
      * [divisas] [List] [MutableList].
      */
-    fun getMarsPhotos() {
+    fun getDivisas() {
         viewModelScope.launch {
             divisasUiState = DivisasUiState.Loading
             divisasUiState = try {
-                val listResult = divisasRepository.getDivisas()
+                val listDivisas = divisasRepository.getDivisas()
                 DivisasUiState.Success(
-                    "Success: ${listResult.size} Mars photos retrieved"
+                    "Base: ${listDivisas.base_code}, " +
+                            "Tasa USD: ${listDivisas.conversion_rates["USD"]}"
                 )
             } catch (e: IOException) {
                 DivisasUiState.Error
@@ -73,16 +74,4 @@ class DivisasViewModel @Inject constructor(
             }
         }
     }
-    /*companion object {
-        val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer {
-                val application = (this[APPLICATION_KEY] as MarsPhotosApplication)
-                val marsPhotosRepository = application.container.marsPhotosRepository
-                MarsViewModel(marsPhotosRepository = marsPhotosRepository)
-            }
-        }
-    }
-*/
 }
-
-

@@ -5,13 +5,13 @@ import com.example.marsphotos.network.DivisasApiService
 
 
 interface DivisasRepository {
-    suspend fun getDivisas(): List<divisas>
+    suspend fun getDivisas(): divisas
 }
 
 class NetworkDivisasRepository(
     private val divisasApiService: DivisasApiService
 ) : DivisasRepository {
-    override suspend fun getDivisas(): List<divisas> = divisasApiService.getPhotos()
+    override suspend fun getDivisas(): divisas = divisasApiService.getDivisas()
 }
 
 

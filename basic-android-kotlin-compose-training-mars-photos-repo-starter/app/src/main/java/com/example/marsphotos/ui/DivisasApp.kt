@@ -36,6 +36,7 @@ import com.example.marsphotos.R
 import com.example.marsphotos.ui.screens.HomeScreen
 import com.example.marsphotos.ui.screens.DivisasViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DivisasApp() {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -60,6 +61,7 @@ fun DivisasApp() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MarsTopAppBar(scrollBehavior: TopAppBarScrollBehavior, modifier: Modifier = Modifier) {
     CenterAlignedTopAppBar(

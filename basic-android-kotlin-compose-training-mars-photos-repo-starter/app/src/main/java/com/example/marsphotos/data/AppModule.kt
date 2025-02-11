@@ -15,14 +15,18 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
-    private const val BASE_URL = "https://v6.exchangerate-api.com/v6/e3ce342fafdb05301b1ad31b/latest/MXN"
+    private const val BASE_URL = "https://v6.exchangerate-api.com/v6/e3ce342fafdb05301b1ad31b/latest/"
 
     @Provides
     @Singleton
     fun provideRetrofit(): Retrofit {
+        val json = Json {
+            ignoreUnknownKeys = true // ✅ Ignorar claves desconocidas
+        }
+
         return Retrofit.Builder()
-            .addConverterFactory(Json.asConverterFactory("application/json".toMediaType()))
             .baseUrl(BASE_URL)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
     }
 
@@ -38,4 +42,3 @@ object AppModule {
         return NetworkDivisasRepository(apiService)
     }
 }
-

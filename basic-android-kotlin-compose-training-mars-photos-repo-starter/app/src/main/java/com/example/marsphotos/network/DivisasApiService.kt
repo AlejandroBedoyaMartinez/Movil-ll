@@ -19,12 +19,9 @@ package com.example.marsphotos.network
 import com.example.marsphotos.model.divisas
 import retrofit2.http.GET
 
+interface DivisasApiService {
+    @GET("mxn")
+    suspend fun getDivisas(): divisas
+}
 
-    /**
-     * Retrofit service object for creating api calls
-     */
-    interface DivisasApiService {
-        @GET("photos")
-        suspend fun getPhotos(): List<divisas>
-    }
 

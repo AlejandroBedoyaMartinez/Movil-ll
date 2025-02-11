@@ -9,13 +9,4 @@ import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
 class DivisasApplication : Application()
-/*{
 
-  lateinit var container: AppContainer
-  override fun onCreate() {
-      super.onCreate()
-      container = DefaultAppContainer()
-  }
-}
-
-   */

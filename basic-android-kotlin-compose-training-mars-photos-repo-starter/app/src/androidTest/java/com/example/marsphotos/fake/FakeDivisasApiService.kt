@@ -5,7 +5,7 @@ import com.example.marsphotos.network.DivisasApiService
 
 class FakeDivisasApiService : DivisasApiService {
 
-    override suspend fun getPhotos(): List<divisas> {
+    override suspend fun getDivisas(): List<divisas> {
         return FakeDataSource.photosList
     }
 
