@@ -53,9 +53,9 @@ android {
 
 dependencies {
     // Room
-    implementation("androidx.room:room-runtime:2.5.2")
-    kapt("androidx.room:room-compiler:2.5.2")
-    implementation("androidx.room:room-ktx:2.5.2")
+    implementation("androidx.room:room-runtime:${rootProject.extra["room_version"]}")
+    kapt("androidx.room:room-compiler:${rootProject.extra["room_version"]}")
+    implementation("androidx.room:room-ktx:${rootProject.extra["room_version"]}")
 
     // WorkManager
     implementation("androidx.work:work-runtime-ktx:2.9.0")

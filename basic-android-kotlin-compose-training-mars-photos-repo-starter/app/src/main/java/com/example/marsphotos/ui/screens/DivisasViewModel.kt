@@ -21,6 +21,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.marsphotos.data.DivisasRepository
+import com.example.marsphotos.dataDivisas.Divisa
+import com.example.marsphotos.dataDivisas.divisaRepository
 import com.example.marsphotos.model.divisas
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
@@ -41,7 +43,8 @@ sealed interface DivisasUiState {
 
 @HiltViewModel
 class DivisasViewModel @Inject constructor(
-    private val divisasRepository: DivisasRepository
+    private val divisasRepository: DivisasRepository,
+    private val Db: divisaRepository
 ) : ViewModel() {
     /** The mutable State that stores the status of the most recent request */
     var divisasUiState: DivisasUiState by mutableStateOf(DivisasUiState.Loading)
@@ -54,24 +57,32 @@ class DivisasViewModel @Inject constructor(
         getDivisas()
     }
 
-    /**
-     * Gets Mars photos information from the Mars API Retrofit service and updates the
-     * [divisas] [List] [MutableList].
-     */
     fun getDivisas() {
         viewModelScope.launch {
             divisasUiState = DivisasUiState.Loading
             divisasUiState = try {
                 val listDivisas = divisasRepository.getDivisas()
+                insertarDivisaDB(listDivisas)
                 DivisasUiState.Success(
                     "Base: ${listDivisas.base_code}, " +
                             "Tasa USD: ${listDivisas.conversion_rates["USD"]}"
                 )
+
             } catch (e: IOException) {
                 DivisasUiState.Error
             } catch (e: HttpException) {
                 DivisasUiState.Error
             }
+        }
+    }
+
+    fun insertarDivisaDB(listDivisas:divisas){
+        val entity = Divisa(
+            base_code = listDivisas.base_code,
+            conversion_rates = listDivisas.conversion_rates
+        )
+        viewModelScope.launch {
+            Db.insertDivisa(entity)
         }
     }
 }
