@@ -15,19 +15,30 @@
  */
 package com.example.marsphotos.ui.screens
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.marsphotos.data.DivisasRepository
 import com.example.marsphotos.dataDivisas.Divisa
 import com.example.marsphotos.dataDivisas.divisaRepository
 import com.example.marsphotos.model.divisas
+import com.example.marsphotos.workManager.DivisasWorker
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.count
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 
@@ -46,10 +57,12 @@ class DivisasViewModel @Inject constructor(
     private val divisasRepository: DivisasRepository,
     private val Db: divisaRepository
 ) : ViewModel() {
+
     /** The mutable State that stores the status of the most recent request */
     var divisasUiState: DivisasUiState by mutableStateOf(DivisasUiState.Loading)
         private set
-
+    private val _Divisa: MutableStateFlow<List<Divisa>> = MutableStateFlow(emptyList())
+    var divisas: StateFlow<List<Divisa>> = _Divisa
     /**
      * Call getMarsPhotos() on init so we can display status immediately.
      */
@@ -57,15 +70,26 @@ class DivisasViewModel @Inject constructor(
         getDivisas()
     }
 
+    init {
+        viewModelScope.launch {
+            Db.getDivisas().collect { divisaList ->
+                _Divisa.value = divisaList
+            }
+        }
+    }
+
+
+
     fun getDivisas() {
         viewModelScope.launch {
             divisasUiState = DivisasUiState.Loading
             divisasUiState = try {
                 val listDivisas = divisasRepository.getDivisas()
-                insertarDivisaDB(listDivisas)
+                //insertarDivisaDB(listDivisas)
                 DivisasUiState.Success(
                     "Base: ${listDivisas.base_code}, " +
-                            "Tasa USD: ${listDivisas.conversion_rates["USD"]}"
+                            "Tasa USD: ${listDivisas.conversion_rates["USD"]}\n" +
+                            "Total de actualizaciones: ${divisas.value.size}"
                 )
 
             } catch (e: IOException) {
@@ -76,7 +100,8 @@ class DivisasViewModel @Inject constructor(
         }
     }
 
-    fun insertarDivisaDB(listDivisas:divisas){
+    suspend fun insertarDivisaDB(){
+        val listDivisas = divisasRepository.getDivisas()
         val entity = Divisa(
             base_code = listDivisas.base_code,
             conversion_rates = listDivisas.conversion_rates
@@ -85,4 +110,5 @@ class DivisasViewModel @Inject constructor(
             Db.insertDivisa(entity)
         }
     }
+
 }

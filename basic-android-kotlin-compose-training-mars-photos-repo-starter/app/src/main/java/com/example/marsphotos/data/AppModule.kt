@@ -2,6 +2,7 @@ package com.example.marsphotos.data
 
 import android.content.Context
 import androidx.room.Room
+import androidx.work.WorkerFactory
 import com.example.marsphotos.dataDivisas.divisaDao
 import com.example.marsphotos.dataDivisas.divisaDb
 import com.example.marsphotos.dataDivisas.divisaRepository
@@ -10,7 +11,7 @@ import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFact
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext // ✅ Agregar esta importación
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -68,4 +69,6 @@ object AppModule {
     fun provideDivisaRepository(dao: divisaDao): divisaRepository {
         return divisaRepository(dao)
     }
+
+
 }
