@@ -12,7 +12,8 @@ class divisaRepository (private val divisaDao: divisaDao
                     Divisa(
                         id = entity.id,
                         base_code = entity.base_code,
-                        conversion_rates = entity.conversion_rates
+                        conversion_rates = entity.conversion_rates,
+                        Date = entity.Date
                     )
                 }
             }
@@ -24,7 +25,8 @@ class divisaRepository (private val divisaDao: divisaDao
                 Divisa(
                     id = entity.id,
                     base_code = entity.base_code,
-                    conversion_rates = entity.conversion_rates
+                    conversion_rates = entity.conversion_rates,
+                    Date = entity.Date
                 )
             }
     }
@@ -34,7 +36,8 @@ class divisaRepository (private val divisaDao: divisaDao
         val entity = divisaEntity(
             id = entity.id,
             base_code = entity.base_code,
-            conversion_rates = entity.conversion_rates
+            conversion_rates = entity.conversion_rates,
+            Date = entity.Date
         )
         divisaDao.insert(entity)
     }
@@ -43,7 +46,8 @@ class divisaRepository (private val divisaDao: divisaDao
         val entity = divisaEntity(
             id = entity.id,
             base_code = entity.base_code,
-            conversion_rates = entity.conversion_rates
+            conversion_rates = entity.conversion_rates,
+            Date = entity.Date
         )
         divisaDao.delete(entity)
     }
@@ -52,7 +56,8 @@ class divisaRepository (private val divisaDao: divisaDao
         val entity = divisaEntity(
             id = entity.id,
             base_code = entity.base_code,
-            conversion_rates = entity.conversion_rates
+            conversion_rates = entity.conversion_rates,
+            Date = entity.Date
         )
         divisaDao.update(entity)
     }

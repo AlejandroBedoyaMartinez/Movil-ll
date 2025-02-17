@@ -10,6 +10,7 @@ data class divisaEntity(
     val id: Int = 0,
     val base_code: String,
     @TypeConverters(ConversionRatesConverter::class)
-    val conversion_rates: Map<String, Double>
+    val conversion_rates: Map<String, Double>,
+    val Date:String
 )
 

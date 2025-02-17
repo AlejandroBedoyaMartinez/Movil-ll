@@ -14,12 +14,13 @@ class DivisasWorkerFactory @Inject constructor(
     private val divisasRepository: DivisasRepository
 ) {
 
-    suspend fun insertarDivisa() {
+    suspend fun insertarDivisa(Date:String) {
         try {
             val listDivisas = divisasRepository.getDivisas()
             val entity = Divisa(
                 base_code = listDivisas.base_code,
-                conversion_rates = listDivisas.conversion_rates
+                conversion_rates = listDivisas.conversion_rates,
+                Date = Date
             )
             Log.d("WorkManager", "Divisa insertada correctamente en la BD.")
             db.insertDivisa(entity)

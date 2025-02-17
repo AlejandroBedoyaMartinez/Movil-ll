@@ -16,6 +16,8 @@
 package com.example.marsphotos.ui.screens
 
 import android.content.Context
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -38,6 +40,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.count
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -100,11 +107,16 @@ class DivisasViewModel @Inject constructor(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     suspend fun insertarDivisaDB(){
         val listDivisas = divisasRepository.getDivisas()
-        val entity = Divisa(
+        val formato = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        val fechaHoraActual = LocalDateTime.now()
+       val entity = Divisa(
             base_code = listDivisas.base_code,
-            conversion_rates = listDivisas.conversion_rates
+            conversion_rates = listDivisas.conversion_rates,
+            Date = fechaHoraActual.format(formato).toString()
+
         )
         viewModelScope.launch {
             Db.insertDivisa(entity)
