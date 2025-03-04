@@ -8,31 +8,35 @@ import android.telephony.TelephonyManager
 import android.util.Log
 
 class MyBroadcastReceiver : BroadcastReceiver() {
-
     override fun onReceive(context: Context?, intent: Intent?) {
         if (intent?.action == TelephonyManager.ACTION_PHONE_STATE_CHANGED) {
             val estado = intent.getStringExtra(TelephonyManager.EXTRA_STATE)
-            val numero = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)
+            val numeroEntrante = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)
 
             if (estado == TelephonyManager.EXTRA_STATE_RINGING) {
-                Log.d("llamada receiver", "Llamada entrante de: $numero")
+                Log.d("LlamadaReceiver", "Llamada entrante de: $numeroEntrante")
 
-                if (numero == "6505551212") {
-                    Log.d("llamada receiver", "¡Es el número deseado!")
-                    sendSMS(context, numero, "Estoy ocupado, te llamaré más tarde.")
+                val sharedPreferences = context?.getSharedPreferences("LlamadaReceiver", Context.MODE_PRIVATE)
+                val numeroGuardado = sharedPreferences?.getString("numero", "")
+                val mensaje = sharedPreferences?.getString("mensaje", "")
+                Log.d("LlamadaReceiver", numeroGuardado + mensaje + "")
+
+                if (numeroEntrante == numeroGuardado) {
+                    Log.d("LlamadaReceiver", "¡Número detectado! Enviando SMS...")
+                    enviarSMS(numeroEntrante, mensaje ?: "", context)
                 }
             }
         }
     }
 
-    private fun sendSMS(context: Context?, phoneNumber: String?, message: String) {
-        val smsManager: SmsManager = SmsManager.getDefault()
-        if (phoneNumber != null) {
+    private fun enviarSMS(numero: String?, mensaje: String, context: Context?) {
+        if (numero != null && mensaje.isNotEmpty() && context != null) {
             try {
-                smsManager.sendTextMessage(phoneNumber, null, message, null, null)
-                Log.d("llamada receiver", "Mensaje enviado a: $phoneNumber")
+                val smsManager = SmsManager.getDefault()
+                smsManager.sendTextMessage(numero, null, mensaje, null, null)
+                Log.d("LlamadaReceiver", "SMS enviado correctamente a $numero")
             } catch (e: Exception) {
-                Log.e("llamada receiver", "Error al enviar el mensaje: ${e.message}")
+                Log.e("LlamadaReceiver", "Error al enviar SMS: ${e.message}")
             }
         }
     }
