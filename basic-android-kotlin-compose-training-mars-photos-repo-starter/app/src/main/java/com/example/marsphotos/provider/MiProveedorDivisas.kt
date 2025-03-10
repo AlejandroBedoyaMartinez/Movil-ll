@@ -6,7 +6,7 @@ import android.content.UriMatcher
 import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
-import android.content.Context
+import android.util.Log
 import com.example.marsphotos.data.ContentProviderEntryPoint
 import com.example.marsphotos.dataDivisas.Divisa
 import com.example.marsphotos.dataDivisas.divisaRepository
@@ -20,19 +20,18 @@ class MiProveedorDivisas : ContentProvider() {
 
     override fun onCreate(): Boolean {
         val appContext = context?.applicationContext ?: return false
-
         val hiltEntryPoint = EntryPointAccessors.fromApplication(
             appContext,
             ContentProviderEntryPoint::class.java
         )
         repository = hiltEntryPoint.repository()
-
+        Log.d("MiProveedorDivisas", "Proveedor creado correctamente.")
         return true
     }
 
     private val sUriMatcher = UriMatcher(UriMatcher.NO_MATCH).apply {
-        addURI("com.example.divisas.provider", "divisas", 1)
-        addURI("com.example.divisas.provider", "divisas/currency/*", 2)
+        addURI("provider", "divisas", 1)
+
     }
 
     override fun query(
@@ -42,43 +41,35 @@ class MiProveedorDivisas : ContentProvider() {
         selectionArgs: Array<out String>?,
         sortOrder: String?
     ): Cursor? {
-        val cursor = MatrixCursor(arrayOf("base_code", "currency", "rate", "date"))
-
+        val cursor = MatrixCursor(arrayOf("id","base_code", "conversion_rates", "Date"))
+        Log.d("MiProveedorDivisas", "entrando a querys ")
+        val match = sUriMatcher.match(uri)
+        Log.d("MiProveedorDivisas", "URI match result: $match, URI: $uri")
+        if (match != 1) {
+            Log.e("MiProveedorDivisas", "URI no reconocida en sUriMatcher")
+            return null
+        }
         when (sUriMatcher.match(uri)) {
             1 -> {
                 val divisas: List<Divisa> = runBlocking {
                     repository.getDivisas().first()
                 }
-                divisas.forEach { divisa ->
-                    divisa.conversion_rates.forEach { (currency, rate) ->
-                        cursor.addRow(arrayOf(divisa.base_code, currency, rate, divisa.Date))
+
+                if (divisas.isEmpty()) {
+                    Log.d("MiProveedorDivisas", "No se encontraron divisas")
+                } else {
+                    divisas.forEach { divisa ->
+                        cursor.addRow(arrayOf(divisa.id,divisa.base_code, divisa.conversion_rates, divisa.Date))
                     }
                 }
             }
-            2 -> {
-                if (selectionArgs == null || selectionArgs.size < 3) return null
-                val moneda = selectionArgs[0]
-                val fechaInicio = selectionArgs[1]
-                val fechaFin = selectionArgs[2]
-
-                val divisas: List<Divisa> = runBlocking {
-                    repository.getDivisasByDateRange(fechaInicio, fechaFin).first()
-                }
-
-                divisas.forEach { divisa ->
-                    val rate = divisa.conversion_rates[moneda] ?: return@forEach
-                    cursor.addRow(arrayOf(divisa.base_code, moneda, rate, divisa.Date))
-                }
-            }
-            else -> return null
         }
         return cursor
     }
 
     override fun getType(uri: Uri): String? {
         return when (sUriMatcher.match(uri)) {
-            1 -> "vnd.android.cursor.dir/vnd.com.example.divisas.provider.divisas"
-            2 -> "vnd.android.cursor.item/vnd.com.example.divisas.provider.divisas"
+            1 -> "vnd.android.cursor.dir/vnd.provider.divisas"
             else -> null
         }
     }
