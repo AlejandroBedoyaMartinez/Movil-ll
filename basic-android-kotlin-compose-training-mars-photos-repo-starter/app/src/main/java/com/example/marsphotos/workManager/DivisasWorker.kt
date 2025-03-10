@@ -32,7 +32,7 @@ class DivisasWorker @AssistedInject constructor(
             val fechaHoraActual = LocalDateTime.now()
             divisasWorkerFactory.insertarDivisa(fechaHoraActual.format(formato).toString())
             Log.d("WorkManager", "Tarea Finalizada: ${System.currentTimeMillis()}")
-            if(divisasWorkerFactory.getDivisasSize() < 3){
+            if(divisasWorkerFactory.getDivisasSize() < 24){
                 scheduleNextWork()
             }
             Result.success()
@@ -44,7 +44,7 @@ class DivisasWorker @AssistedInject constructor(
     private fun scheduleNextWork() {
         Log.d("WorkManager", "Tarea nueva: ${System.currentTimeMillis()/60000}")
         val workRequest = OneTimeWorkRequestBuilder<DivisasWorker>()
-            .setInitialDelay(1, TimeUnit.MINUTES)
+            .setInitialDelay(1, TimeUnit.HOURS)
             .build()
 
         WorkManager.getInstance(applicationContext).enqueue(workRequest)
