@@ -1,77 +1,93 @@
 package jano.net.appcliente
 
-import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.github.mikephil.charting.charts.BarChart
+import com.github.mikephil.charting.components.Description
+import com.github.mikephil.charting.data.*
+import androidx.compose.ui.viewinterop.AndroidView
 import jano.net.appcliente.ui.theme.AppClienteTheme
+import org.json.JSONObject
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             AppClienteTheme {
-                ConsultaDivisas()
+                GraficoTodasLasDivisas()
             }
         }
     }
 }
 
 @Composable
-fun ConsultaDivisas() {
+fun GraficoTodasLasDivisas() {
     val context = LocalContext.current
-    val resultado = remember { mutableStateOf("") }
+    val datos = remember { mutableStateOf<List<BarEntry>>(emptyList()) }
+    val labels = remember { mutableStateOf<List<String>>(emptyList()) }
 
     LaunchedEffect(Unit) {
-        resultado.value = obtenerDatosDelProvider(context)
+        val (entries, currencyLabels) = obtenerDatosParaGrafico(context)
+        datos.value = entries
+        labels.value = currencyLabels
     }
 
-    Log.d("Cliente", resultado.value)
-    Text(
-        text = resultado.value,
+    AndroidView(
         modifier = Modifier
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
+            .fillMaxWidth()
+            .height(400.dp)
+            .padding(16.dp),
+        factory = { ctx ->
+            BarChart(ctx).apply {
+                description = Description().apply { text = "Conversiones de MXN" }
+                xAxis.labelRotationAngle = 90f // Rotar etiquetas para mejor lectura
+                axisRight.isEnabled = false // Ocultar eje derecho
+            }
+        },
+        update = { chart ->
+            val dataSet = BarDataSet(datos.value, "Valor en otras monedas").apply {
+                color = android.graphics.Color.BLUE
+                valueTextSize = 8f
+            }
+            chart.data = BarData(dataSet)
+            chart.invalidate()
+        }
     )
 }
 
-fun obtenerDatosDelProvider(context: Context): String {
+fun obtenerDatosParaGrafico(context: Context): Pair<List<BarEntry>, List<String>> {
     val cursor = context.contentResolver.query(
         Uri.parse("content://provider/divisas"),
         null, null, null, null
     )
 
-    val resultado = StringBuilder()
-    if (cursor != null && cursor.moveToFirst()) {
-        do {
-            val id = cursor.getInt(cursor.getColumnIndexOrThrow("id"))
-            val baseCode = cursor.getString(cursor.getColumnIndexOrThrow("base_code"))
-            val conversionRates = cursor.getString(cursor.getColumnIndexOrThrow("conversion_rates"))
-            val date = cursor.getString(cursor.getColumnIndexOrThrow("Date"))
+    val listaDatos = mutableListOf<BarEntry>()
+    val labels = mutableListOf<String>()
 
-            resultado.append("ID: $id, Base Code: $baseCode, Conversion Rates: $conversionRates, Date: $date\n")
-        } while (cursor.moveToNext())
+    if (cursor != null && cursor.moveToFirst()) {
+        val conversionRates = cursor.getString(cursor.getColumnIndexOrThrow("conversion_rates"))
+        val jsonRates = JSONObject(conversionRates)
+        var index = 0f
+
+        jsonRates.keys().forEach { currencyCode ->
+            val rate = jsonRates.optDouble(currencyCode, Double.NaN)
+            if (!rate.isNaN()) {
+                listaDatos.add(BarEntry(index, rate.toFloat()))
+                labels.add(currencyCode)
+                index++
+            }
+        }
 
         cursor.close()
-    } else {
-        resultado.append("Cursor vacío o no se pudo obtener datos.\n")
     }
-
-    return resultado.toString()
+    return Pair(listaDatos, labels)
 }
-
-
-
