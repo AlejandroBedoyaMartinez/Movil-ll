@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -61,6 +62,8 @@ fun FutbolitoPocket() {
     val sensorValue by rememberAccelerometerSensorValueAsState()
     val (x, y, z) = sensorValue.value
 
+    var showDialog by remember { mutableStateOf(false) }
+
     val imageBitmap = ImageBitmap.imageResource(id = R.drawable.balonfutbol)
 
     var golesEquipoA by remember { mutableStateOf(0) }
@@ -76,21 +79,23 @@ fun FutbolitoPocket() {
     var gol by remember { mutableStateOf(true) }
     LaunchedEffect(sensorValue) {
         while (gol) {
-            if (offsetX < 0) offsetX = 0f
-            if (offsetX > screenWidth) offsetX = screenWidth
+            if (offsetX < 50) offsetX = 100f
+            if (offsetX > screenWidth) offsetX = screenWidth - 50
 
             if (offsetX > 420f && offsetX < 570f && offsetY < 300f) {
                 golesEquipoB++
                 gol = false
+                showDialog = true
             }else if ((offsetX < 420f || offsetX > 570f) && offsetY < 370){
-                offsetY = 370f
+                offsetY = 420f
             }
 
             if (offsetX > 420f && offsetX < 570f && offsetY > 1800f) {
                 golesEquipoA++
                 gol = false
+                showDialog = true
             }else if ((offsetX < 420f || offsetX > 570f) && offsetY > 1740) {
-                offsetY = 1740f
+                offsetY = 1690f
             }
 
             offsetX += (-x) * velocidad
@@ -99,9 +104,6 @@ fun FutbolitoPocket() {
             delay(16L)
         }
     }
-    Log.d("balon","$offsetX y $offsetY")
-
-
 
     Box(
         modifier = Modifier
@@ -138,5 +140,36 @@ fun FutbolitoPocket() {
                 )
             }
         }
+
+        if (showDialog) {
+            GolDialogo(
+                golesEquipoA = golesEquipoA,
+                golesEquipoB = golesEquipoB,
+                onDismiss = {
+                    showDialog = false
+                    offsetX = screenWidth / 2
+                    offsetY = screenHeight / 2
+                    gol = true
+                }
+            )
+        }
     }
+}
+
+
+
+@Composable
+fun GolDialogo(golesEquipoA: Int, golesEquipoB: Int, onDismiss: () -> Unit) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("¡Gol!") },
+        text = {
+            Text("Equipo A: $golesEquipoA\nEquipo B: $golesEquipoB")
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Aceptar")
+            }
+        }
+    )
 }
