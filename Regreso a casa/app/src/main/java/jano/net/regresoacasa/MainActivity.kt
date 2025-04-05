@@ -1,6 +1,6 @@
 package jano.net.regresoacasa
 
-import android.annotation.SuppressLint
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -26,7 +26,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.utsman.osmandcompose.DefaultMapProperties
 import com.utsman.osmandcompose.Marker
@@ -37,21 +36,22 @@ import com.utsman.osmandcompose.rememberMarkerState
 import com.utsman.osmandcompose.rememberOverlayManagerState
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
+import com.utsman.osmandcompose.Polyline
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            principal()
+            principal(this)
         }
     }
 }
 
 @Composable
-fun principal() {
-    var direccion by remember { mutableStateOf("") }
+fun principal(context: Context) {
+    var direccion by remember { mutableStateOf("Calle P. Javier Cardoso 12, Santiago Maravatío, Guanajuato") }
     var show by remember { mutableStateOf(false) }
-
+    var routeCoordinates by remember { mutableStateOf<List<List<Double>>>(emptyList()) }
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
             text = "Ingresa tu dirección",
@@ -66,38 +66,49 @@ fun principal() {
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
         )
-        Spacer(modifier = Modifier.height(50.dp))
+        Text(text = " Ejemplo: (Calle numero), (ciudad) , (estado)",
+            modifier = Modifier.padding(16.dp),
+        )
         Button(
             modifier = Modifier
                 .width(200.dp)
                 .align(Alignment.CenterHorizontally),
             colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
             onClick = {
-                show = !show
-            })
-        {
+                show = true
+                if (direccion.isNotEmpty()) {
+                    getCurrentLocation(
+                        LocationServices.getFusedLocationProviderClient(context)
+                    ) { location ->
+                        getLocationAndRoute(
+                            location.latitude,
+                            location.longitude,
+                            direccion
+                        ) { coordinates ->
+                            routeCoordinates = coordinates
+                        }
+                    }
+                }
+            }
+        ) {
             Text(text = "Buscar")
         }
     }
-
     if (show) {
-        MapScreen(setShow = { show = it })
+        MapScreen(setShow = { show = it }, routeCoordinates = routeCoordinates)
     }
 }
 
 @Composable
-fun MapScreen(setShow: (Boolean) -> Unit) {
+fun MapScreen(setShow: (Boolean) -> Unit, routeCoordinates: List<List<Double>>) {
     BackHandler {
         setShow(false)
     }
-
     val context = LocalContext.current
     val fusedLocationProviderClient = remember { LocationServices.getFusedLocationProviderClient(context) }
-
     val overlayManagerState = rememberOverlayManagerState()
     var currentLocation by remember { mutableStateOf(GeoPoint(19.432608, -99.133209)) }
     var isFirstLocationSet by remember { mutableStateOf(false) }
-
     val mapProperties = remember {
         DefaultMapProperties.copy(
             isTilesScaledToDpi = true,
@@ -107,13 +118,11 @@ fun MapScreen(setShow: (Boolean) -> Unit) {
             isMultiTouchControls = true
         )
     }
-
     val cameraState = rememberCameraState {
         geoPoint
         zoom
     }
     val markerState = rememberMarkerState()
-
     LaunchedEffect(Unit) {
         getCurrentLocation(fusedLocationProviderClient) { location ->
             if (!isFirstLocationSet) {
@@ -134,8 +143,13 @@ fun MapScreen(setShow: (Boolean) -> Unit) {
         overlayManagerState = overlayManagerState
     ) {
         Marker(state = markerState)
+        if (routeCoordinates.isNotEmpty()) {
+            val geoPoints = routeCoordinates.mapNotNull { coord ->
+                if (coord.size >= 2) GeoPoint(coord[1], coord[0]) else null
+            }
+            Polyline(geoPoints = geoPoints)
+        }
     }
-
     IconButton(
         onClick = { setShow(false) },
         modifier = Modifier
@@ -146,12 +160,5 @@ fun MapScreen(setShow: (Boolean) -> Unit) {
             contentDescription = "Volver",
             tint = Color.Black
         )
-    }
-}
-
-@SuppressLint("MissingPermission")
-fun getCurrentLocation(fusedLocationProviderClient: FusedLocationProviderClient, onLocationReceived: (android.location.Location) -> Unit) {
-    fusedLocationProviderClient.lastLocation.addOnSuccessListener { location ->
-        location?.let { onLocationReceived(it) }
     }
 }
