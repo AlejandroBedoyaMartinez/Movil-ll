@@ -62,6 +62,8 @@ dependencies {
 
     implementation(libs.osmdroid.android)
     implementation(libs.osm.androd.compose)
+    implementation(libs.play.services.location)
+    implementation(libs.androidx.navigation.compose)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
